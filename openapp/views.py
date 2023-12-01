@@ -87,7 +87,30 @@ def get_history(request):
 
 
         return JsonResponse(context)
-    
+
+def convert_messages(messages):
+    messages_list = []
+
+    for message in messages:
+        messages_list.append({"role": "user", "content":message['messageInput']})
+        messages_list.append({"role": "assistant", "content": message['bot_response']})
+
+    return messages_list
+
+def get_bot_response(user, message):
+    history = ChatGptBot.objects.filter(user=user).values()
+    messages = convert_messages(history)
+    messages.append({"role": "user", "content": message})
+
+    response = openai.chat.completions.create(
+        model='gpt-3.5-turbo',
+        messages=messages,
+    )
+
+    chat_message = response.choices[0].message.content
+    print("Bot: ", chat_message)
+
+    return chat_message
 
 @csrf_exempt
 def send_message(request):
@@ -101,7 +124,7 @@ def send_message(request):
             #clean input from any white spaces
             clean_user_input = str(user_input).strip()
             #send request with user's prompt
-            response = openai.Completion.create(
+            """response = openai.Completion.create(
                 model="text-davinci-003",
                     prompt=clean_user_input,
                     temperature=0,
@@ -110,13 +133,16 @@ def send_message(request):
                     frequency_penalty=0.5,
                     presence_penalty=0
                     )
+            
             #get response
             bot_response = response['choices'][0]['text']
-            
+            """
+
+            bot_response = get_bot_response(user, clean_user_input)
             obj, created = ChatGptBot.objects.get_or_create(
                 user=request.user,
                 messageInput=clean_user_input,
-                bot_response=bot_response.strip(),
+                bot_response=bot_response,
             )
 
             return JsonResponse({"bot_response": bot_response})
