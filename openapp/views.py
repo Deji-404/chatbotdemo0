@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from dotenv import load_dotenv
 import os
 import openai
+from .assistant import QAAssistant
 from .models import ChatGptBot
 load_dotenv()
 from django.contrib.auth import authenticate, login
@@ -19,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+qa_assistant = QAAssistant()
 
 def index(request):
     #check if user is authenticated
@@ -138,11 +140,12 @@ def send_message(request):
             bot_response = response['choices'][0]['text']
             """
 
-            bot_response = get_bot_response(user, clean_user_input)
+            assistant_response = qa_assistant.run_assistant(clean_user_input)
+            #bot_response = get_bot_response(user, clean_user_input)
             obj, created = ChatGptBot.objects.get_or_create(
                 user=request.user,
                 messageInput=clean_user_input,
-                bot_response=bot_response,
+                bot_response=assistant_response,
             )
 
-            return JsonResponse({"bot_response": bot_response})
+            return JsonResponse({"bot_response": assistant_response})
