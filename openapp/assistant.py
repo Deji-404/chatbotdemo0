@@ -1,12 +1,13 @@
 import openai
 import time
+import os
 
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class QAAssistant:
     def __init__(self):
         self.client = openai.OpenAI(
-            api_key="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"
+            api_key=os.getenv("OPENAI_API_KEY")
         )
         #self.file = self._upload_file(file_path)
         self.assistant = self._create_assistant()
